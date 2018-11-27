@@ -17,6 +17,6 @@ int main()
 {
     memset(image_data, 0, width * height * 3 / 2);
     memset(image_data + width * height * 3 / 2, 255, width * height * 3 / 2);
-    write_image("test.png");
+    write_image("output.png");
     return 0;
 }

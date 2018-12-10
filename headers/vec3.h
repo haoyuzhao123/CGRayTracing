@@ -12,6 +12,11 @@ class Vec3 {
             y = 0;
             z = 0;
         }
+        Vec3(double x) {
+            this -> x = x;
+            this -> y = x;
+            this -> z = x;
+        }
         Vec3(double x, double y, double z) {
             this -> x = x;
             this -> y = y;
@@ -22,14 +27,14 @@ class Vec3 {
             return sqrt(x * x + y * y + z * z);
         }
 
-        Vec3 normalize() {
+        Vec3& normalize() {
             double len = norm();
             if (len > 0) {
-                return Vec3(x/len, y/len, z/len);
+                this -> x *= 1 / len;
+                this -> y *= 1 / len;
+                this -> z *= 1 / len;
             }
-            else {
-                return Vec3();
-            }
+            return *this;
         }
         //multiply with double
         Vec3 operator * (const double & f) const {
@@ -40,7 +45,7 @@ class Vec3 {
             return Vec3(x * v.x, y * v.y, z * v.z);
         }
         //dot product
-        double dot(const Vec3 &v) {
+        double dot(const Vec3 &v) const {
             return x * v.x + y * v.y + z * v.z;
         }
 

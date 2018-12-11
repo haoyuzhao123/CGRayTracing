@@ -36,15 +36,20 @@ class Vec3 {
             }
             return *this;
         }
-        //multiply with double
+        // copy
+        Vec3 copy() const {
+            return Vec3(this -> x, this -> y, this -> z);
+        }
+        // operators
+        // multiply with double
         Vec3 operator * (const double & f) const {
             return Vec3(x * f, y * f, z * f);
         }
-        //elementwise product
+        // elementwise product
         Vec3 operator * (const Vec3 &v) const {
             return Vec3(x * v.x, y * v.y, z * v.z);
         }
-        //dot product
+        // dot product
         double dot(const Vec3 &v) const {
             return x * v.x + y * v.y + z * v.z;
         }

@@ -5,13 +5,78 @@
 
 class Object {
     public:
-        virtual bool intersects(const Vec3 &rayorig, const Vec3 &raydir, Vec3 * intersect);
-        virtual Vec3 normalvec(const Vec3 &point);
-        virtual bool intersect(const Vec3 &rayorig, const Vec3 &raydir, float &t0, float &t1) const;
+        virtual Vec3 normalvec(const Vec3 &point) const;
+        virtual bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len) const;
+        virtual double getTransparency() const;
+        virtual double getReflection() const;
+        virtual Vec3 getSurfaceColor() const;
+        virtual Vec3 getEmissionColor() const;
+        virtual Vec3 getLightDirection(const Vec3 &point) const;
 };
 
 class Sphere : public Object{
     public:
+        Sphere( 
+            const Vec3 &c, 
+            const double &r, 
+            const Vec3 &sc, 
+            const double &refl = 0, 
+            const double &transp = 0, 
+            const Vec3 &ec = 0) : 
+            center(c), radius(r), radius2(r * r), surfaceColor(sc), emissionColor(ec), 
+            transparency(transp), reflection(refl) { 
+            /* empty */ 
+        }
+
+        Vec3 normalvec(const Vec3 &point) const {
+            Vec3 ret = point - this -> center;
+            return ret.normalize();
+        }
+
+        bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len) const { 
+            Vec3 l = center - rayorig; 
+            double tca = l.dot(raydir); 
+            double l2 = l.dot(l);
+            if (tca < 0 && l2 > radius2) {
+                return false; 
+            }
+            double d2 = l.dot(l) - tca * tca; 
+            if (d2 > radius2) {
+                return false; 
+            }
+            double thc = sqrt(radius2 - d2); 
+            double t0 = tca - thc; 
+            double t1 = tca + thc; 
+            if (t0 < 0) {
+                len = t1;
+            }
+            else {
+                len = t0;
+            }
+            return true; 
+        } 
+
+        double getTransparency() const {
+            return this -> transparency;
+        }
+
+        double getReflection() const {
+            return this -> reflection;
+        }
+
+        Vec3 getSurfaceColor() const {
+            return (this -> surfaceColor).copy();
+        }
+
+        Vec3 getEmissionColor() const {
+            return (this -> emissionColor).copy();
+        }
+
+        Vec3 getLightDirection(const Vec3 &point) const {
+            return (this -> center - point).copy();
+        }
+
+    private:
         Vec3 center;
         double radius;
         double radius2;
@@ -19,47 +84,6 @@ class Sphere : public Object{
         Vec3 emissionColor;
         double transparency;
         double reflection;
-
-        Sphere( 
-        const Vec3 &c, 
-        const double &r, 
-        const Vec3 &sc, 
-        const double &refl = 0, 
-        const double &transp = 0, 
-        const Vec3 &ec = 0) : 
-        center(c), radius(r), radius2(r * r), surfaceColor(sc), emissionColor(ec), 
-        transparency(transp), reflection(refl) 
-        { /* empty */ }
-
-        bool intersects(const Vec3 &rayorig, const Vec3 &raydir, Vec3 * intersect) {
-            Vec3 l = this -> center - rayorig;
-            if (l.norm() < this -> radius) {
-                return true;
-            }
-            double len1 = l.dot(raydir);
-            if(len1 < 0) {
-                return false;
-            }
-        }
-
-        Vec3 normalvec(const Vec3 &point) {
-            Vec3 ret = point - this -> center;
-            return ret.normalize();
-        }
-
-        bool intersect(const Vec3 &rayorig, const Vec3 &raydir, float &t0, float &t1) const 
-        { 
-        Vec3 l = center - rayorig; 
-        float tca = l.dot(raydir); 
-        if (tca < 0) return false; 
-        float d2 = l.dot(l) - tca * tca; 
-        if (d2 > radius2) return false; 
-        float thc = sqrt(radius2 - d2); 
-        t0 = tca - thc; 
-        t1 = tca + thc; 
- 
-        return true; 
-        } 
 };
 
 #endif

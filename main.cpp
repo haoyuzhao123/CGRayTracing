@@ -114,17 +114,24 @@ Vec3 trace(
 
 void render(const std::vector<Sphere> &spheres) { 
     Vec3 *image = new Vec3[width * height], *pixel = image; 
+    /*
     float invWidth = 1 / float(width), invHeight = 1 / float(height); 
     float fov = 30, aspectratio = width / float(height); 
     float angle = tan(M_PI * 0.5 * fov / 180.); 
+    */
     // Trace rays
     for (unsigned y = 0; y < height; ++y) { 
         for (unsigned x = 0; x < width; ++x, ++pixel) { 
-            float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio; 
-            float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
-            Vec3 raydir(xx, yy, -1); 
+            //float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio; 
+            //float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
+            //the width (y-axis) of the picture is [-10,10], the picture lies at z=0
+            double xx = (2 * double(x) / width - 1) * 10;
+            double yy = (2 * double(y) / height - 1) * 10 * height / width;
+            // position of the camera is (0,0,zz)
+            double zz = 10;
+            Vec3 raydir(xx, yy, -10); 
             raydir.normalize(); 
-            *pixel = trace(Vec3(0), raydir, spheres, 0); 
+            *pixel = trace(Vec3(0,0,zz), raydir, spheres, 0); 
         } 
     } 
     // Save result to a PPM image (keep these flags if you compile under Windows)
@@ -139,10 +146,25 @@ void render(const std::vector<Sphere> &spheres) {
     ofs.close(); 
     delete [] image; 
     */
-   for (unsigned i = 0; i < width * height; ++i) { 
-        image_data[3*i] =  (unsigned char)(std::min(1.0, image[i].x) * 255);
-        image_data[3*i+1] =  (unsigned char)(std::min(1.0, image[i].y) * 255);
-        image_data[3*i+2] =  (unsigned char)(std::min(1.0, image[i].z) * 255); 
+    unsigned idx = 3 * width * (height+1);
+    for (unsigned i = 0; i < width * height; ++i) { 
+        if (idx % (3 * width) == 0) {
+            idx -= 2 * 3 * width;
+        }
+        image_data[idx++] =  (unsigned char)(std::min(1.0, image[i].x) * 255);
+        image_data[idx++] =  (unsigned char)(std::min(1.0, image[i].y) * 255);
+        image_data[idx++] =  (unsigned char)(std::min(1.0, image[i].z) * 255); 
+        /*
+        if (i < width * height - i) {
+            image_data[3*i] =  0;
+            image_data[3*i+1] =  0;
+            image_data[3*i+2] =  0; 
+        } else {
+            image_data[3*i] =  255;
+            image_data[3*i+1] =  255;
+            image_data[3*i+2] =  255; 
+        }
+        */
     }
     delete [] image; 
     stbi_write_png("test.png", width, height, 3, image_data, width * 3);
@@ -153,13 +175,13 @@ int main(int argc, char **argv)
     srand(13); 
     std::vector<Sphere> spheres; 
     // position, radius, surface color, reflectivity, transparency, emission color
-    spheres.push_back(Sphere(Vec3( 0.0, -10008, -20), 10000, Vec3(0.20, 0.20, 0.20), 0, 0.0)); 
-    spheres.push_back(Sphere(Vec3( 0.0,      -4, -50),     4, Vec3(1.00, 0.32, 0.36), 1, 0.5)); 
-    spheres.push_back(Sphere(Vec3( 5.0,     -5, -45),     2, Vec3(0.90, 0.76, 0.46), 1, 0.0)); 
-    spheres.push_back(Sphere(Vec3( 5.0,      -4, -55),     3, Vec3(0.65, 0.77, 0.97), 1, 0.0)); 
-    spheres.push_back(Sphere(Vec3(-5.5,      -4, -45),     3, Vec3(0.90, 0.90, 0.90), 1, 0.0)); 
+    spheres.push_back(Sphere(Vec3( 0.0, -10008, -0), 10000, Vec3(0.20, 0.20, 0.20), 0, 0.0)); 
+    spheres.push_back(Sphere(Vec3( 0.0,      -4, -10),     4, Vec3(1.00, 0.32, 0.36), 1, 0.5)); 
+    spheres.push_back(Sphere(Vec3( 5.0,     -5, -5),     2, Vec3(0.90, 0.76, 0.46), 1, 0.0)); 
+    spheres.push_back(Sphere(Vec3( 5.0,      -4, -15),     3, Vec3(0.65, 0.77, 0.97), 1, 0.0)); 
+    spheres.push_back(Sphere(Vec3(-5.5,      -4, -5),     3, Vec3(0.90, 0.90, 0.90), 1, 0.0)); 
     // light
-    spheres.push_back(Sphere(Vec3( 0.0,     5, -60),     3, Vec3(0.00, 0.00, 0.00), 0, 0.0, Vec3(3))); 
+    spheres.push_back(Sphere(Vec3( 0.0,     5, -5),     3, Vec3(0.00, 0.00, 0.00), 0, 0.0, Vec3(3))); 
     render(spheres); 
  
     return 0; 

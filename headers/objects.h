@@ -5,13 +5,13 @@
 
 class Object {
     public:
-        virtual Vec3 normalvec(const Vec3 &point) const;
-        virtual bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len) const;
-        virtual double getTransparency() const;
-        virtual double getReflection() const;
-        virtual Vec3 getSurfaceColor() const;
-        virtual Vec3 getEmissionColor() const;
-        virtual Vec3 getLightDirection(const Vec3 &point) const;
+        virtual Vec3 normalvec(const Vec3 &point) const {};
+        virtual bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len) const {};
+        virtual double getTransparency() const {};
+        virtual double getReflection() const {};
+        virtual Vec3 getSurfaceColor() const {};
+        virtual Vec3 getEmissionColor() const {};
+        virtual Vec3 getLightDirection(const Vec3 &point) const {};
 };
 
 class Sphere : public Object{

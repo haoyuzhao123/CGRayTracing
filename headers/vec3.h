@@ -72,6 +72,7 @@ class Vec3 {
         Vec3 operator - () const {
             return Vec3(-x, -y, -z);
         }
+        // cross product
         Vec3 cross (Vec3 &b) {
             return Vec3(y*b.z-z*b.y,z*b.x-x*b.z,x*b.y-y*b.x);
         }

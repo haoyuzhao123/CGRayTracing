@@ -11,6 +11,7 @@
 
 #include "headers/vec3.h"
 #include "headers/ray.h"
+#include "headers/util.h"
 
 const int w=1024;
 const int h=768;
@@ -33,20 +34,8 @@ double hal(const int b, int j) {
 	}
 	return h;
 }
-/*
-struct Vec3 {double x, y, z; // vector: position, also color (r,g,b)
-	Vec3(double x_ = 0, double y_ = 0, double z_ = 0) {x = x_; y = y_; z = z_;}
-	inline Vec3 operator+(const Vec3 &b) const {return Vec3(x+b.x, y+b.y, z+b.z);}
-	inline Vec3 operator-(const Vec3 &b) const {return Vec3(x-b.x, y-b.y, z-b.z);}
-	inline Vec3 operator+(double b) const {return Vec3(x + b, y + b, z + b);}
-	inline Vec3 operator-(double b) const {return Vec3(x - b, y - b, z - b);}
-	inline Vec3 operator*(double b) const {return Vec3(x * b, y * b, z * b);}
-	inline Vec3 mul(const Vec3 &b) const {return Vec3(x * b.x, y * b.y , z * b.z);}
-	inline Vec3 norm() {return (*this) * (1.0 / sqrt(x*x+y*y+z*z));}
-	inline double dot(const Vec3 &b) const {return x * b.x + y * b.y + z * b.z;}
-	Vec3 operator%(Vec3&b) {return Vec3(y*b.z-z*b.y,z*b.x-x*b.z,x*b.y-y*b.x);}};
-*/
-#define MAX(x, y) ((x > y) ? x : y)
+
+//#define MAX(x, y) ((x > y) ? x : y)
 
 struct AABB {Vec3 min, max; // axis aligned bounding box
 	inline void fit(const Vec3 &p)
@@ -172,11 +161,6 @@ Sphere sph[] = { // Scene: radius, position, color, material
   Sphere(16.5,Vec3(27,16.5,47),       Vec3(1,1,1)*.999, SPEC),//Mirror
   Sphere(16.5,Vec3(73,16.5,88),       Vec3(1,1,1)*.999, REFR),//Glass
   Sphere(8.5, Vec3(50,8.5,60),        Vec3(1,1,1)*.999, DIFF)};//Middle
-
-// tone mapping and gamma correction
-int toInt(double x){
-	return int(pow(1-exp(-x),1/2.2)*255+.5);
-} 
 
 // find the closet interection
 inline bool intersect(const Ray &r,double &t,int &id){
@@ -335,13 +319,10 @@ int main(int argc, char *argv[]) {
 		c[i]=c[i]+hp->flux*(1.0/(PI*hp->r2*num_photon*1000.0));
 	}
 
-	// save the image after tone mapping and gamma correction
-	//FILE* f = fopen("image.ppm","w"); fprintf(f,"P3\n%d %d\n%d\n",w,h,255);
 	for(int i = 0; i< w * h; i++) {
-        image_data[3*i] = toInt(c[i].x);
-        image_data[3*i+1] = toInt(c[i].y);
-        image_data[3*i+2] = toInt(c[i].z); 
-	//fprintf(f,"%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
+        image_data[3*i] = gammaCorr(c[i].x);
+        image_data[3*i+1] = gammaCorr(c[i].y);
+        image_data[3*i+2] = gammaCorr(c[i].z); 
 	}
     stbi_write_png("test.png", w, h, 3, image_data, w * 3);
     return 0;

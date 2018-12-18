@@ -35,8 +35,6 @@ double hal(const int b, int j) {
 	return h;
 }
 
-//#define MAX(x, y) ((x > y) ? x : y)
-
 struct AABB {Vec3 min, max; // axis aligned bounding box
 	inline void fit(const Vec3 &p)
 	{

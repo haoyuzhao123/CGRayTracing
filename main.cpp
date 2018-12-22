@@ -162,10 +162,10 @@ int main(int argc, char *argv[]) {
 
 	vector<Object *> objs;
 	vector<Sphere> sphs;
-	sphs.push_back(Sphere(Vec3(0.0, -10020, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(10020, 0.0, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10020, 0.0, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, -10020, 0.0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(10020, 0.0, 0.0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10020, 0.0, 0.0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 10030, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
 	
 
@@ -181,10 +181,10 @@ int main(int argc, char *argv[]) {
 	int counter = 0;
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			counter++;
 			image_data[3 * counter] = gammaCorr(image[height - i][j].x);
         	image_data[3 * counter + 1] = gammaCorr(image[height - i][j].y);
-        	image_data[3 * counter + 2] = gammaCorr(image[height - i][j].z); 
+        	image_data[3 * counter + 2] = gammaCorr(image[height - i][j].z);
+			counter++;
 		}
 	}
     stbi_write_png("test.png", width, height, 3, image_data, width * 3);

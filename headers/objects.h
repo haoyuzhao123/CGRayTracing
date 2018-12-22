@@ -10,8 +10,6 @@ class Object {
         virtual double getTransparency() const {};
         virtual double getReflection() const {};
         virtual Vec3 getSurfaceColor() const {};
-        virtual Vec3 getEmissionColor() const {};
-        virtual Vec3 getLightDirection(const Vec3 &point) const {};
 };
 
 class Sphere : public Object{
@@ -23,7 +21,7 @@ class Sphere : public Object{
             const double &refl = 0, 
             const double &transp = 0, 
             const Vec3 &ec = 0) : 
-            center(c), radius(r), radius2(r * r), surfaceColor(sc), emissionColor(ec), 
+            center(c), radius(r), radius2(r * r), surfaceColor(sc), 
             transparency(transp), reflection(refl) { 
             /* empty */ 
         }
@@ -68,20 +66,11 @@ class Sphere : public Object{
             return (this -> surfaceColor).copy();
         }
 
-        Vec3 getEmissionColor() const {
-            return (this -> emissionColor).copy();
-        }
-
-        Vec3 getLightDirection(const Vec3 &point) const {
-            return (this -> center - point).copy();
-        }
-
     private:
         Vec3 center;
         double radius;
         double radius2;
         Vec3 surfaceColor;
-        Vec3 emissionColor;
         double transparency;
         double reflection;
 };

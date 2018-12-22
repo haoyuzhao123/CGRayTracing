@@ -5,12 +5,24 @@
 
 // MAX
 
-int MAX(int a, int b) {
+int max(int a, int b) {
     return (a > b) ? a : b;
 }
 
-double MAX(double a, double b) {
+double max(double a, double b) {
     return (a > b) ? a : b;
+}
+
+double max(double a, double b, double c) {
+    if (a > b && a > c) {
+        return a;
+    }
+    else if (b > c) {
+        return b;
+    }
+    else {
+        return c;
+    }
 }
 
 // tone mapping and gamma correction

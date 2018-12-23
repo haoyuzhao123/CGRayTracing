@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include <ctime>
+#include <omp.h>
 
 using namespace std;
 
@@ -129,8 +131,8 @@ void render(const vector<Object *> &objs) {
 	Vec3 lightorg = Vec3(0,25,20);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
-	double r = 400.0 / height;
-	Hashtable htable = Hashtable(100001,r);
+	double r = 200.0 / height;
+	Hashtable htable = Hashtable(1000001,r);
 	for (int h = 0; h < height; h++) {
 		fprintf(stderr, "\rHitPointPass %5.2f%%", 100.0 * (h+1) / height);
 		for (int w = 0; w < width; w++) {
@@ -140,15 +142,25 @@ void render(const vector<Object *> &objs) {
 			trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 		}
 	}
-	fprintf(stderr,"\n"); 
-	int num_photon = 100000;
-
-	//#pragma omp parallel for schedule(dynamic, 1)
-	for (int i = 0; i < num_photon; i++) {
-		double p = 100.0 * (i+1) / num_photon;
-		fprintf(stderr, "\rPhotonPass %5.2f%%",p);
-		Vec3 dir = uniform_sampling_sphere();
-		trace(lightorg, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 0, htable, 0, 0);
+	fprintf(stderr,"\n");
+	// multi-thread for the photon pass
+	// total photon = num_photon * num_threads
+	int num_photon = 1280000;
+	int num_threads = 8;
+	omp_set_num_threads(num_threads);
+	#pragma omp parallel 
+	{
+		// need to set the rand() seed in each thread
+		srand(int(time(NULL)) ^ omp_get_thread_num());
+		#pragma omp parallel for
+		for (int i = 0; i < num_photon; i++) {
+			//double p = 100.0 * (i+1) / num_photon;
+			//fprintf(stderr, "\rPhotonPass %5.2f%%",p);
+			//for(int j = 0; j < 1000; j++) {
+				Vec3 dir = uniform_sampling_sphere();
+				trace(lightorg, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+			//}
+		}
 	}
 
 	//vector<Hitpoint> * ptr = htable.getPtr();
@@ -156,7 +168,7 @@ void render(const vector<Object *> &objs) {
 		//vector<Hitpoint> * nptr = ptr + j;
 		for (int i = 0; i < htable.hashtable[j].size(); i++) {
 			Hitpoint hp = htable.hashtable[j][i];
-			image[hp.h][hp.w] = image[hp.h][hp.w] + hp.flux * (1.0/(PI*hp.r2*num_photon));
+			image[hp.h][hp.w] = image[hp.h][hp.w] + hp.flux * (1.0/(PI*hp.r2*num_photon*num_threads));
 		}
 	}
 
@@ -185,7 +197,7 @@ int main(int argc, char *argv[]) {
 	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10040), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 10040, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 0.0, -10020), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10.0, 0.0, 30), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10.0, -10.0, 30), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	
 
 	Object * obj;
@@ -200,9 +212,9 @@ int main(int argc, char *argv[]) {
 	int counter = 0;
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			image_data[3 * counter] = gammaCorr(image[height - i][j].x);
-        	image_data[3 * counter + 1] = gammaCorr(image[height - i][j].y);
-        	image_data[3 * counter + 2] = gammaCorr(image[height - i][j].z);
+			image_data[3 * counter] = gammaCorr(image[height - i - 1][j].x);
+        	image_data[3 * counter + 1] = gammaCorr(image[height - i - 1][j].y);
+        	image_data[3 * counter + 2] = gammaCorr(image[height - i - 1][j].z);
 			counter++;
 		}
 	}

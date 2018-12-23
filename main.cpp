@@ -13,13 +13,14 @@ using namespace std;
 #include "headers/objects.h"
 #include "headers/sampling.h"
 #include "headers/hitpoints.h"
+#include "headers/hash.h"
 
 const double eps = 1e-4;
 const double INF = 1e10;
 const double PI = 3.14159265358979;
 
-const int width = 128;
-const int height = 96;
+const int width = 1024;
+const int height = 768;
 // image_data : the data for generating PNG
 char image_data[width * height * 3];
 // image : the image data in the computation
@@ -32,15 +33,13 @@ const Vec3 background = Vec3(0.0, 0.0, 0.0);
 
 int debug_counter = 0;
 
-void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 flux, Vec3 adj, bool flag, int depth, vector<Hitpoint> &hitpoints, int x, int y, bool debug = false) {
+void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 flux, Vec3 adj, bool flag, int depth, Hashtable & htable, int x, int y) {
 	// org is the origin of the ray
 	// dir is the direction of the ray, should be normalized
 	// depth is the current depth of the ray tracing algorithm
-	if(debug) printf("depth: %d\n", depth);
 	if (depth >= MAX_DEPTH) {
 		return;
 	}
-	if(debug) printf("test1\n");
 	// find the nearest intersection point
 	double len;
 	int id = -1;
@@ -53,7 +52,6 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 			}
 		}
 	}
-	if(debug) printf("test2\n");
 	if (id == -1) { // no intersection with the objects
 		return;
 	}
@@ -68,11 +66,10 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 
 	double p = max(f.x, f.y, f.z);
 
-	if(debug) printf("test3\n");
 
 	if (obj->getReflection() < eps && obj->getTransparency() < eps) {
-		if(debug) printf("test4\n");
 		// diffusion
+		double r = 400.0 / height;
 		if (flag) {
 			// the ray from the eye
 			Hitpoint hp = Hitpoint();
@@ -82,34 +79,42 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 			hp.w = x;
 			hp.h = y;
 			hp.flux = Vec3();
-			hp.r2 = 4 * (100.0 / height) * (100.0 / height);
+			hp.r2 = r * r;
 			hp.n = 0;
-			hitpoints.push_back(hp);
+			//hitpoints.push_back(hp);
+			//printf("begin insert\n");
+			htable.insert(hp);
+			//printf("end insert\n");
 		}
 		else {
-			if(debug) printf("test5\n");
 			// the photon ray from the light source
-			for (int i = 0; i < hitpoints.size(); i++) {
-				Vec3 d = hitpoints[i].pos - intersection;
-				if ((hitpoints[i].normal.dot(normalvec) > eps) && (d.dot(d) <= hitpoints[i].r2)) {
-					debug_counter++;
-					double g = (hitpoints[i].n * alpha + alpha) / (hitpoints[i].n * alpha + 1.0);
-					hitpoints[i].r2 *= g;
-					hitpoints[i].n++;
-					hitpoints[i].flux = (hitpoints[i].flux + hitpoints[i].f.mul(flux) * (1.0 / PI)) * g;
+			int ix, iy, iz;
+			htable.compute_coord(intersection.x, intersection.y, intersection.z, ix, iy, iz);
+			ix -= 1;
+			iy -= 1;
+			iz -= 1;
+			int idx = 0, idy = 0, idz = 0;
+			// search for the adjacent grids
+			for (idx = 0; idx < 3; idx++)
+			for (idy = 0; idy < 3; idy++)
+			for (idz = 0; idz < 3; idz++) {
+				int hashid = htable.hash(ix + idx, iy + idy, iz + idz);
+			for (int i = 0; i < htable.hashtable[hashid].size(); i++) {
+				Vec3 d = htable.hashtable[hashid][i].pos - intersection;
+				if ((htable.hashtable[hashid][i].normal.dot(normalvec) > eps) && (d.dot(d) <= htable.hashtable[hashid][i].r2)) {
+					// the equations here comes from the equations in smallppm.cpp
+					// in smallppm.cpp, n = N / alpha
+					double g = (htable.hashtable[hashid][i].n * alpha + alpha) / (htable.hashtable[hashid][i].n * alpha + 1.0);
+					htable.hashtable[hashid][i].r2 *= g;
+					htable.hashtable[hashid][i].n++;
+					htable.hashtable[hashid][i].flux = (htable.hashtable[hashid][i].flux + htable.hashtable[hashid][i].f.mul(flux) * (1.0 / PI)) * g;
 				}
 			}
-			if(debug) printf("test6\n");
-			//sample the next direction
-			if(debug) printf("%f\n", normalvec.norm());
-			if(debug) printf("%f %f %f\n", normalvec.x, normalvec.y, normalvec.z);
+			}
 			Vec3 newdir = uniform_sampling_halfsphere(normalvec);
-			//printf("recursice call\n");
-			trace(intersection, newdir, objs, f * flux * (1.0 / p), adj, flag, depth+1, hitpoints, x, y, debug);
-			//printf("end recursice call\n");
+			trace(intersection, newdir, objs, f * flux * (1.0 / p), adj, flag, depth+1, htable, x, y);
 		}
 	}
-	if(debug) printf("out\n");
 }
 
 void render(const vector<Object *> &objs) {
@@ -121,34 +126,46 @@ void render(const vector<Object *> &objs) {
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
 	// the light source locate that (0,50,20)
-	Vec3 lightorg = Vec3(0,20,20);
+	Vec3 lightorg = Vec3(0,25,20);
 	Vec3 camorg = Vec3(0,0,-10);
-	vector<Hitpoint> hitpoints;
+	//vector<Hitpoint> hitpoints;
+	double r = 400.0 / height;
+	Hashtable htable = Hashtable(100001,r);
 	for (int h = 0; h < height; h++) {
-		fprintf(stderr, "\rHitPointPass %5.2f%%", 100.0 * h / height);
+		fprintf(stderr, "\rHitPointPass %5.2f%%", 100.0 * (h+1) / height);
 		for (int w = 0; w < width; w++) {
 			double x = (2.0 * ((double)w/width)-1) * 10.0;
 			double y = (2.0 * ((double)h/height)-1) * 10.0 * height / width;
 			Vec3 dir = (Vec3(x,y,0) - camorg).normalize();
-			trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, hitpoints, w, h);
+			trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 		}
 	}
 	fprintf(stderr,"\n"); 
 	int num_photon = 100000;
 
+	//#pragma omp parallel for schedule(dynamic, 1)
 	for (int i = 0; i < num_photon; i++) {
 		double p = 100.0 * (i+1) / num_photon;
 		fprintf(stderr, "\rPhotonPass %5.2f%%",p);
 		Vec3 dir = uniform_sampling_sphere();
-		trace(lightorg, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 0, hitpoints, 0, 0, false);
+		trace(lightorg, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 0, htable, 0, 0);
 	}
 
-	for (int i = 0; i < hitpoints.size(); i++) {
-		Hitpoint hp = hitpoints[i];
-		image[hp.h][hp.w] = image[hp.h][hp.w] + hp.flux * (1.0/(PI*hp.r2*num_photon));
+	//vector<Hitpoint> * ptr = htable.getPtr();
+	for (int j = 0; j < htable.hashtable.size(); j++) {
+		//vector<Hitpoint> * nptr = ptr + j;
+		for (int i = 0; i < htable.hashtable[j].size(); i++) {
+			Hitpoint hp = htable.hashtable[j][i];
+			image[hp.h][hp.w] = image[hp.h][hp.w] + hp.flux * (1.0/(PI*hp.r2*num_photon));
+		}
 	}
 
-	printf("\nhitpoints: %d\n", hitpoints.size());
+	int debug_counter = 0;
+	for (int i = 0; i < htable.hashtable.size(); i++) {
+		debug_counter += htable.hashtable[i].size();
+	}
+
+	printf("\nhitpoints: %d\n", debug_counter);
 }
 
 int main(int argc, char *argv[]) {
@@ -163,10 +180,12 @@ int main(int argc, char *argv[]) {
 	vector<Object *> objs;
 	vector<Sphere> sphs;
 	sphs.push_back(Sphere(Vec3(0.0, -10020, 0.0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(10020, 0.0, 0.0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10020, 0.0, 0.0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 10030, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(10030, 0.0, 0.0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0.0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10040), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 10040, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, -10020), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10.0, 0.0, 30), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	
 
 	Object * obj;

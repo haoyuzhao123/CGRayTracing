@@ -7,6 +7,7 @@
 
 #include "vec3.h"
 
+// las vegas algorithm to generate the uniform distribution on a sphere
 Vec3 uniform_sampling_sphere() {
     while(true) {
         double x = (double)rand() / RAND_MAX * 2.0 - 1;
@@ -18,13 +19,10 @@ Vec3 uniform_sampling_sphere() {
     }
 }
 
-Vec3 uniform_sampling_halfsphere(const Vec3 &dir, bool debug = false) {
+Vec3 uniform_sampling_halfsphere(const Vec3 &dir) {
     while(true) {
-        if(debug) printf("testtest1\n");
         Vec3 sample = uniform_sampling_sphere();
-        if(debug) printf("testtest2\n");
         if (sample.dot(dir) > 0) {
-            if(debug) printf("testtest3\n");
             return sample;
         }
     }

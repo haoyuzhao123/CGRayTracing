@@ -12,10 +12,10 @@ const double SIZE_OF_SCENE = 70.0;
 
 const double XMAX = 35.0;
 const double XMIN = -35.0;
-const double YMAX = 55.0;
-const double YMIN = -15.0;
-const double ZMAX = 45.0;
-const double ZMIN = -25.0;
+const double YMAX = 35.0;
+const double YMIN = -35.0;
+const double ZMAX = 55.0;
+const double ZMIN = -15.0;
 
 class Hashtable {
     public:

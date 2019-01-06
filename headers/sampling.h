@@ -28,4 +28,8 @@ Vec3 uniform_sampling_halfsphere(const Vec3 &dir) {
     }
 }
 
+double uniform_sampling_zeroone() {
+    return (double)rand() / RAND_MAX;
+}
+
 #endif

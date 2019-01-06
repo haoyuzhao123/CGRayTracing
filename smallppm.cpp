@@ -278,6 +278,9 @@ void trace(const Ray &r,int dpt,bool m,const Vec &fl,const Vec &adj,int i)
 		Vec td = (r.d*nnt - n*((into?1:-1)*(ddn*nnt+sqrt(cos2t)))).norm();
 		double a=nt-nc, b=nt+nc, R0=a*a/(b*b), c = 1-(into?-ddn:td.dot(n));
 		double Re=R0+(1-R0)*c*c*c*c*c,P=Re;Ray rr(x,td);Vec fa=f.mul(adj);
+		if (c > 1) {
+			fprintf(stderr, "c > 1\n");
+		}
 		if (m) {
 			// eye ray (trace both rays)
 			trace(lr,dpt,m,fl,fa*Re,i);
@@ -315,7 +318,7 @@ int main(int argc, char *argv[]) {
 	#pragma omp parallel for schedule(dynamic, 1)
 	for(int i=0;i<num_photon;i++) {
 		double p=100.*(i+1)/num_photon;
-		fprintf(stderr,"\rPhotonPass %5.2f%%",p); 
+		//fprintf(stderr,"\rPhotonPass %5.2f%%",p); 
 		int m=1000*i; 
 		Ray r; 
 		Vec f;

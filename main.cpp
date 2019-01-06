@@ -28,7 +28,7 @@ char image_data[width * height * 3];
 // image : the image data in the computation
 Vec3 image[height][width];
 
-const int MAX_DEPTH = 5;
+const int MAX_DEPTH = 10;
 const double alpha = 0.7;
 
 const Vec3 background = Vec3(0.0, 0.0, 0.0);
@@ -61,8 +61,11 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 	Vec3 intersection = org + dir * nearest;
 	Vec3 normalvec = obj->normalvec(intersection);
 	// inside the object, change the direction of the normal vector
+	bool into = true;
+	Vec3 normalvec_old = normalvec;
 	if (normalvec.dot(dir) > 0) {
 		normalvec = -normalvec;
+		into = false;
 	}
 	Vec3 f = obj->getSurfaceColor();
 
@@ -101,21 +104,59 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 			for (idy = 0; idy < 3; idy++)
 			for (idz = 0; idz < 3; idz++) {
 				int hashid = htable.hash(ix + idx, iy + idy, iz + idz);
-			for (int i = 0; i < htable.hashtable[hashid].size(); i++) {
-				Vec3 d = htable.hashtable[hashid][i].pos - intersection;
-				if ((htable.hashtable[hashid][i].normal.dot(normalvec) > eps) && (d.dot(d) <= htable.hashtable[hashid][i].r2)) {
-					// the equations here comes from the equations in smallppm.cpp
-					// in smallppm.cpp, n = N / alpha
-					double g = (htable.hashtable[hashid][i].n * alpha + alpha) / (htable.hashtable[hashid][i].n * alpha + 1.0);
-					htable.hashtable[hashid][i].r2 *= g;
-					htable.hashtable[hashid][i].n++;
-					htable.hashtable[hashid][i].flux = (htable.hashtable[hashid][i].flux + htable.hashtable[hashid][i].f.mul(flux) * (1.0 / PI)) * g;
+				for (int i = 0; i < htable.hashtable[hashid].size(); i++) {
+					Vec3 d = htable.hashtable[hashid][i].pos - intersection;
+					if ((htable.hashtable[hashid][i].normal.dot(normalvec) > eps) && (d.dot(d) <= htable.hashtable[hashid][i].r2)) {
+						// the equations here comes from the equations in smallppm.cpp
+						// in smallppm.cpp, n = N / alpha
+						double g = (htable.hashtable[hashid][i].n * alpha + alpha) /		(htable.hashtable[hashid][i].n * alpha + 1.0);
+						htable.hashtable[hashid][i].r2 *= g;
+						htable.hashtable[hashid][i].n++;
+						htable.hashtable[hashid][i].flux = (htable.hashtable[hashid][i].flux + htable.hashtable[hashid][i].f.mul(flux) * (1.0 / PI)) * g;
+					}
 				}
-			}
 			}
 			Vec3 newdir = uniform_sampling_halfsphere(normalvec);
 			trace(intersection, newdir, objs, f * flux * (1.0 / p), adj, flag, depth+1, htable, x, y);
 		}
+	} else if (obj -> getTransparency() < eps) {
+		// mirror
+		Vec3 newdir = dir - normalvec * 2.0 * normalvec.dot(dir);
+		double refl = obj -> getReflection();
+		intersection = intersection + normalvec * eps; // prevent problem created by double number precision
+		trace(intersection, newdir, objs, f * flux * refl, f * adj * refl, flag, depth+1, htable, x, y);
+	} else {
+		
+		// refraction
+		//Ray lr(x,r.d-n*2.0*n.dot(r.d)); 
+		//bool into = (normalvec_old.dot(nl)>0.0);
+		double nc = 1.0, nt=1.5, nnt = into?nc/nt:nt/nc, ddn = dir.dot(normalvec), cos2t;
+		Vec3 refl_dir = dir - normalvec_old * 2.0 * normalvec_old.dot(dir);
+
+		// total internal reflection
+		if ((cos2t=1-nnt*nnt*(1-ddn*ddn))<0) return trace(intersection + normalvec * eps, refl_dir, objs, flux, adj, flag, depth+1, htable, x, y);
+
+		Vec3 refr_dir = (dir * nnt - normalvec_old * ((into?1:-1)*(ddn*nnt+sqrt(cos2t)))).normalize();
+		if (!into && refr_dir.dot(normalvec_old) < 0) {
+			fprintf(stderr, "error\n");
+		}
+		double a=nt-nc, b=nt+nc, R0=a*a/(b*b), c = 1-(into?-ddn:refr_dir.dot(normalvec_old));
+		double Re=R0+(1-R0)*c*c*c*c*c,P=Re;
+		
+		Vec3 fa=f.mul(adj);
+		if (flag) {
+			// eye ray (trace both rays)
+			trace(intersection + normalvec * eps, refl_dir, objs, flux, fa * Re , flag, depth+1, htable, x, y);
+			trace(intersection - normalvec * eps, refr_dir, objs, flux, fa * (1 - Re), flag, depth+1, htable, x, y);
+		} else {
+			// photon ray (pick one via Russian roulette)
+			if (uniform_sampling_zeroone() < 0.5) {
+				trace(intersection + normalvec * eps, refl_dir, objs, flux, fa * Re, flag, depth+1, htable, x, y);
+			} else {
+				trace(intersection - normalvec * eps, refr_dir, objs, flux, fa * (1 - Re), flag, depth+1, htable, x, y);
+			}
+		}
+		
 	}
 }
 
@@ -128,7 +169,7 @@ void render(const vector<Object *> &objs) {
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
 	// the light source locate that (0,50,20)
-	Vec3 lightorg = Vec3(0,25,20);
+	Vec3 lightorg = Vec3(0,25,30);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
 	double r = 200.0 / height;
@@ -191,13 +232,15 @@ int main(int argc, char *argv[]) {
 
 	vector<Object *> objs;
 	vector<Sphere> sphs;
-	sphs.push_back(Sphere(Vec3(0.0, -10020, 0.0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(10030, 0.0, 0.0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0.0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10040), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 10040, 0.0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, -10020), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10.0, -10.0, 30), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, -10030, 0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(10030, 0.0, 0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 10030, 0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
+	//sphs.push_back(Sphere(Vec3(0.0, 0.0, -10015), 10000, Vec3(0, 0, 0), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
+	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
+	sphs.push_back(Sphere(Vec3(10.0, -20.0, 40), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 	
 
 	Object * obj;

@@ -45,12 +45,15 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 	// find the nearest intersection point
 	double len;
 	int id = -1;
+	Vec3 normalvec;
+	Vec3 temp;
 	double nearest = INF;
 	for (int i = 0; i < objs.size(); i++) {
-		if (objs[i]->intersect(org, dir, len)) {
+		if (objs[i]->intersect(org, dir, len, temp)) {
 			if (len < nearest) {
 				id = i;
 				nearest = len;
+				normalvec = temp;
 			}
 		}
 	}
@@ -59,7 +62,7 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 	}
 	const Object * obj = objs[id];
 	Vec3 intersection = org + dir * nearest;
-	Vec3 normalvec = obj->normalvec(intersection);
+	//Vec3 normalvec = obj->normalvec(intersection);
 	// inside the object, change the direction of the normal vector
 	bool into = true;
 	Vec3 normalvec_old = normalvec;
@@ -241,11 +244,18 @@ int main(int argc, char *argv[]) {
 	sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	sphs.push_back(Sphere(Vec3(10.0, -20.0, 40), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
+
+	vector<Triangle> tris;
+	tris.push_back(Triangle(Vec3(-10,-10,30), Vec3(-20,-10,30), Vec3(-20,10,40), Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
 	
 
 	Object * obj;
 	for (int i = 0; i < sphs.size(); i++) {
 		obj = &sphs[i];
+		objs.push_back(obj);
+	}
+	for (int i = 0; i < tris.size(); i++) {
+		obj = &tris[i];
 		objs.push_back(obj);
 	}
 

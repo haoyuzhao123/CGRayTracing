@@ -73,9 +73,17 @@ class Vec3 {
             return Vec3(-x, -y, -z);
         }
         // cross product
-        Vec3 cross (Vec3 &b) {
+        Vec3 cross (const Vec3 &b) const {
             return Vec3(y*b.z-z*b.y,z*b.x-x*b.z,x*b.y-y*b.x);
         }
+
+        double det(const Vec3 &a, const Vec3 &b, const Vec3 &c) {
+            return (a.x * b.y * c.z + b.x * c.y * a.z + c.x * a.y * b.z - a.x * c.y * b.z - b.x * a.y * c.z - c.x * b.y * a.z);
+        }
 };
+
+double det(const Vec3 &a, const Vec3 &b, const Vec3 &c) {
+    return (a.x * b.y * c.z + b.x * c.y * a.z + c.x * a.y * b.z - a.x * c.y * b.z - b.x * a.y * c.z - c.x * b.y * a.z);
+}
 
 #endif

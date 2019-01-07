@@ -190,7 +190,7 @@ void render(const vector<Object *> &objs) {
 	// multi-thread for the photon pass
 	// total photon = num_photon * num_threads
 	int num_photon = 1280000;
-	int num_threads = 8;
+	int num_threads = 1;
 	omp_set_num_threads(num_threads);
 	#pragma omp parallel 
 	{
@@ -245,8 +245,9 @@ int main(int argc, char *argv[]) {
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	sphs.push_back(Sphere(Vec3(10.0, -20.0, 40), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	vector<Triangle> tris;
-	tris.push_back(Triangle(Vec3(-10,-10,30), Vec3(-20,-10,30), Vec3(-20,10,40), Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
+	TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(10, -20, 30), Vec3(0.25, 0.25, 0.75), 0.0, 0.0);
+
+	//vector<Triangle> tris;
 	
 
 	Object * obj;
@@ -254,10 +255,14 @@ int main(int argc, char *argv[]) {
 		obj = &sphs[i];
 		objs.push_back(obj);
 	}
+	obj = &tm;
+	objs.push_back(obj);
+	/*
 	for (int i = 0; i < tris.size(); i++) {
 		obj = &tris[i];
 		objs.push_back(obj);
 	}
+	*/
 
 	// render
 	render(objs);

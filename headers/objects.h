@@ -366,6 +366,7 @@ class TriangleMesh : public Object {
                     scanf("f %d %d %d \n", &id1, &id2, &id3);
                     triangles.push_back(pair<int, Triangle>(triangles.size(), Triangle(vertices[id1-1] * a + b, vertices[id2-1] * a + b, vertices[id3-1] * a + b)));
                 }
+                
                 fclose(stdin);
                 kdtree.buildKdTree(triangles, 0, false, 0, true);
         }

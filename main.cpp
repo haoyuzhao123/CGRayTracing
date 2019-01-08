@@ -172,7 +172,7 @@ void render(const vector<Object *> &objs) {
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
 	// the light source locate that (0,50,20)
-	Vec3 lightorg = Vec3(-30,25,30);
+	Vec3 lightorg = Vec3(0,29.999,30);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
 	double r = 200.0 / height;
@@ -206,8 +206,11 @@ void render(const vector<Object *> &objs) {
 			//double p = 100.0 * (i+1) / num_photon;
 			//fprintf(stderr, "\rPhotonPass %5.2f%%",p);
 			//for(int j = 0; j < 1000; j++) {
-				Vec3 dir = uniform_sampling_sphere();
-				trace(lightorg, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+				double a = uniform_sampling_zeroone() * 3;
+				double b = uniform_sampling_zeroone() * 3;
+				Vec3 disturbance = Vec3(a, 0, b);
+				Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
+				trace(lightorg + disturbance, dir, objs, Vec3(4500,4500,4500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
 			//}
 		}
 	}
@@ -250,8 +253,9 @@ int main(int argc, char *argv[]) {
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	TriangleMesh tm("model/dragon.txt", 3, Vec3(0, -30, 40), Vec3(0.25, 0.75, 0.25), 0.8, 0.5);
+	TriangleMesh tm("model/dragon.txt", 2.5, Vec3(0, -25, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
 	//TriangleMesh tm("model/tri.txt", 1, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -10, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
 
 	//vector<Triangle> tris;
 	

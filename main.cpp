@@ -248,9 +248,9 @@ int main(int argc, char *argv[]) {
 	//sphs.push_back(Sphere(Vec3(0.0, 0.0, -10015), 10000, Vec3(0, 0, 0), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
-	sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
+	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	//TriangleMesh tm("model/dragon.txt", 3, Vec3(0, -30, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	TriangleMesh tm("model/dragon.txt", 3, Vec3(0, -30, 40), Vec3(0.25, 0.75, 0.25), 0.8, 0.5);
 	//TriangleMesh tm("model/tri.txt", 1, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
 
 	//vector<Triangle> tris;
@@ -261,8 +261,8 @@ int main(int argc, char *argv[]) {
 		obj = &sphs[i];
 		objs.push_back(obj);
 	}
-	//obj = &tm;
-	//objs.push_back(obj);
+	obj = &tm;
+	objs.push_back(obj);
 	/*
 	for (int i = 0; i < tris.size(); i++) {
 		obj = &tris[i];

@@ -82,6 +82,7 @@ class Vec3 {
         }
 };
 
+// computing the determinent
 double det(const Vec3 &a, const Vec3 &b, const Vec3 &c) {
     return (a.x * b.y * c.z + b.x * c.y * a.z + c.x * a.y * b.z - a.x * c.y * b.z - b.x * a.y * c.z - c.x * b.y * a.z);
 }

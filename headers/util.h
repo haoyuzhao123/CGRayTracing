@@ -25,6 +25,22 @@ double max(double a, double b, double c) {
     }
 }
 
+double min(double a, double b) {
+    return (a < b) ? a :b;
+}
+
+double min(double a, double b, double c) {
+    if (a < b && a < c) {
+        return a;
+    }
+    else if (b < c) {
+        return b;
+    }
+    else {
+        return c;
+    }
+}
+
 // tone mapping and gamma correction
 int gammaCorr(double x){
 	return int(pow(1-exp(-x),1/2.2)*255+.5);

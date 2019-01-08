@@ -172,7 +172,7 @@ void render(const vector<Object *> &objs) {
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
 	// the light source locate that (0,50,20)
-	Vec3 lightorg = Vec3(0,25,30);
+	Vec3 lightorg = Vec3(-30,25,30);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
 	double r = 200.0 / height;
@@ -189,8 +189,8 @@ void render(const vector<Object *> &objs) {
 	fprintf(stderr,"\n");
 	// multi-thread for the photon pass
 	// total photon = num_photon * num_threads
-	int num_photon = 1280000;
-	int num_threads = 1;
+	int num_photon = 2560000;
+	int num_threads = 4;
 	omp_set_num_threads(num_threads);
 	#pragma omp parallel 
 	{
@@ -198,6 +198,11 @@ void render(const vector<Object *> &objs) {
 		srand(int(time(NULL)) ^ omp_get_thread_num());
 		#pragma omp parallel for
 		for (int i = 0; i < num_photon; i++) {
+			
+			if(omp_get_thread_num() == 0 && i % 10000 == 0) {
+				fprintf(stderr, "\rPhotonPass %5.2f%%", 100.0 * i / num_photon);
+			}
+			
 			//double p = 100.0 * (i+1) / num_photon;
 			//fprintf(stderr, "\rPhotonPass %5.2f%%",p);
 			//for(int j = 0; j < 1000; j++) {
@@ -235,17 +240,18 @@ int main(int argc, char *argv[]) {
 
 	vector<Object *> objs;
 	vector<Sphere> sphs;
-	sphs.push_back(Sphere(Vec3(0.0, -10030, 0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(10030, 0.0, 0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.57, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, -10030, 0), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(10030, 0.0, 0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 10030, 0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(0.0, 0.0, -10015), 10000, Vec3(0, 0, 0), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
+	//sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
-	sphs.push_back(Sphere(Vec3(10.0, -20.0, 40), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
+	sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(10, -20, 30), Vec3(0.25, 0.25, 0.75), 0.0, 0.0);
+	//TriangleMesh tm("model/dragon.txt", 3, Vec3(0, -30, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	//TriangleMesh tm("model/tri.txt", 1, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
 
 	//vector<Triangle> tris;
 	
@@ -255,8 +261,8 @@ int main(int argc, char *argv[]) {
 		obj = &sphs[i];
 		objs.push_back(obj);
 	}
-	obj = &tm;
-	objs.push_back(obj);
+	//obj = &tm;
+	//objs.push_back(obj);
 	/*
 	for (int i = 0; i < tris.size(); i++) {
 		obj = &tris[i];

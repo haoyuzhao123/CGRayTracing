@@ -133,7 +133,7 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 		// refraction
 		//Ray lr(x,r.d-n*2.0*n.dot(r.d)); 
 		//bool into = (normalvec_old.dot(nl)>0.0);
-		double nc = 1.0, nt=1.5, nnt = into?nc/nt:nt/nc, ddn = dir.dot(normalvec), cos2t;
+		double nc = 1.0, nt=1.33, nnt = into?nc/nt:nt/nc, ddn = dir.dot(normalvec), cos2t;
 		Vec3 refl_dir = dir - normalvec_old * 2.0 * normalvec_old.dot(dir);
 
 		// total internal reflection
@@ -171,8 +171,10 @@ void render(const vector<Object *> &objs) {
 	// the image has z = 0
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
-	// the light source locate that (0,50,20)
-	Vec3 lightorg = Vec3(0,29.999,30);
+	int num_of_samples = 10;
+	double focus_plane = 30.0;
+	double radius = 1.0;
+	Vec3 lightorg = Vec3(0,29.999,20);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
 	double r = 200.0 / height;
@@ -183,6 +185,12 @@ void render(const vector<Object *> &objs) {
 			double x = (2.0 * ((double)w/width)-1) * 10.0;
 			double y = (2.0 * ((double)h/height)-1) * 10.0 * height / width;
 			Vec3 dir = (Vec3(x,y,0) - camorg).normalize();
+			Vec3 point_on_focus = dir * ((focus_plane - camorg.z) / dir.z) + camorg;
+			for (int j = 0; j < num_of_samples; j++) {
+				Vec3 neworg = camorg + uniform_sampling_circle(radius);
+				Vec3 newdir = (point_on_focus - neworg).normalize();
+				trace(neworg, newdir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+			}
 			trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 		}
 	}
@@ -190,7 +198,7 @@ void render(const vector<Object *> &objs) {
 	// multi-thread for the photon pass
 	// total photon = num_photon * num_threads
 	int num_photon = 2560000;
-	int num_threads = 4;
+	int num_threads = 1;
 	omp_set_num_threads(num_threads);
 	#pragma omp parallel 
 	{
@@ -208,9 +216,11 @@ void render(const vector<Object *> &objs) {
 			//for(int j = 0; j < 1000; j++) {
 				double a = uniform_sampling_zeroone() * 3;
 				double b = uniform_sampling_zeroone() * 3;
-				Vec3 disturbance = Vec3(a, 0, b);
-				Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
-				trace(lightorg + disturbance, dir, objs, Vec3(4500,4500,4500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+				//Vec3 disturbance = Vec3(a, 0, b);
+				Vec3 disturbance = Vec3(0,0,0);
+				//Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
+				Vec3 dir = uniform_sampling_sphere();
+				trace(lightorg + disturbance, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
 			//}
 		}
 	}
@@ -220,7 +230,7 @@ void render(const vector<Object *> &objs) {
 		//vector<Hitpoint> * nptr = ptr + j;
 		for (int i = 0; i < htable.hashtable[j].size(); i++) {
 			Hitpoint hp = htable.hashtable[j][i];
-			image[hp.h][hp.w] = image[hp.h][hp.w] + hp.flux * (1.0/(PI*hp.r2*num_photon*num_threads));
+			image[hp.h][hp.w] = image[hp.h][hp.w] + hp.flux * (1.0/(PI*hp.r2*num_photon*num_threads*num_of_samples));
 		}
 	}
 
@@ -243,19 +253,21 @@ int main(int argc, char *argv[]) {
 
 	vector<Object *> objs;
 	vector<Sphere> sphs;
-	sphs.push_back(Sphere(Vec3(0.0, -10030, 0), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(10030, 0.0, 0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0), 10000, Vec3(0.25, 0.25, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10070), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, -10030, 0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(10030, 0.0, 0), 10000, Vec3(0.5, 0.75, 0.5), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0), 10000, Vec3(0.75, 0.5, 0.5), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10050), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 10030, 0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(0.0, 0.0, -10015), 10000, Vec3(0, 0, 0), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	TriangleMesh tm("model/dragon.txt", 2.5, Vec3(0, -25, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	TriangleMesh tm1("model/dragon.txt", 2.5, Vec3(10, -25, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
 	//TriangleMesh tm("model/tri.txt", 1, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
-	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -10, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	//TriangleMesh tm2("model/Mesh001.obj", 30, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
+	TriangleMesh tm2("model/dragon.txt", 2.5, Vec3(-10, -25, 50), Vec3(0.25, 0.5, 0.25), 0.0, 0.0, 1);
 
 	//vector<Triangle> tris;
 	
@@ -265,7 +277,9 @@ int main(int argc, char *argv[]) {
 		obj = &sphs[i];
 		objs.push_back(obj);
 	}
-	obj = &tm;
+	obj = &tm1;
+	objs.push_back(obj);
+	obj = &tm2;
 	objs.push_back(obj);
 	/*
 	for (int i = 0; i < tris.size(); i++) {

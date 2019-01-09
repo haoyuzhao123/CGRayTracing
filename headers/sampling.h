@@ -32,4 +32,14 @@ double uniform_sampling_zeroone() {
     return (double)rand() / RAND_MAX;
 }
 
+Vec3 uniform_sampling_circle(const double radius) {
+    while (true) {
+        double x = (double)rand() / RAND_MAX * 2.0 - 1;
+        double y = (double)rand() / RAND_MAX * 2.0 - 1;
+        if (x * x + y * y < 1) {
+            return Vec3(x, y, 0) * radius;
+        }
+    }
+}
+
 #endif

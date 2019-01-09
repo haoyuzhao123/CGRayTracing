@@ -333,21 +333,22 @@ class KDTree {
 class TriangleMesh : public Object {
     public:
         TriangleMesh(char * filename, double a, const Vec3 &b, const Vec3 &sc, 
-            const double &refl = 0, const double &transp = 0, const Vec3 &ec = 0) :
+            const double &refl = 0, const double &transp = 0, int typeofdata = 0, const Vec3 &ec = 0) :
             surfaceColor(sc), transparency(transp), reflection(refl) {
+                objtype = typeofdata;
                 freopen(filename, "r", stdin);
-                /*
+                if (typeofdata == 0) {
                 double ax,ay,az,bx,by,bz,cx,cy,cz;
                 int i;
                 while ((i = scanf("begin\nvertex %lf %lf %lf\nvertex %lf %lf %lf\nvertex %lf %lf %lf\nend\n\n", &ax, &ay, &az, &bx, &by, &bz, &cx, &cy, &cz)) != EOF ) {
                     //printf("begin\nvertex %lf %lf %lf\nvertex %lf %lf %lf\nvertex %lf %lf %lf\nend\n\n", ax, ay, az, bx, by, bz, cx, cy, cz);
-                    Triangle tri(Vec3(ax,ay,az) * a + b, Vec3(bx,by,bz) * a + b, Vec3(cx,cy,cz) * a + b);
+                    Triangle tri(Vec3(ax,ay,-az) * a + b, Vec3(bx,by,-bz) * a + b, Vec3(cx,cy,-cz) * a + b);
                     //printf("pa: %lf, %lf, %lf\n", tri.pa.x, tri.pa.y, tri.pa.z);
                     //printf("pb: %lf, %lf, %lf\n", tri.pb.x, tri.pb.y, tri.pb.z);
                     //printf("pc: %lf, %lf, %lf\n", tri.pc.x, tri.pc.y, tri.pc.z);
                     triangles.push_back(pair<int, Triangle>(triangles.size(), tri));
                 }
-                */
+                } else if (typeofdata == 1) {
                 int num;
                 int id1,id2,id3;
                 double x,y,z;
@@ -366,7 +367,32 @@ class TriangleMesh : public Object {
                     scanf("f %d %d %d \n", &id1, &id2, &id3);
                     triangles.push_back(pair<int, Triangle>(triangles.size(), Triangle(vertices[id1-1] * a + b, vertices[id2-1] * a + b, vertices[id3-1] * a + b)));
                 }
-                
+                } else if (typeofdata == 2) {
+                int num;
+                int id1,id2,id3,i1,i2,i3,i4,i5,i6;
+                double x,y,z;
+                scanf("%d\n", &num);
+                printf("number of vertices: %d\n", num);
+                vector<Vec3> vertices;
+                for (int i = 0; i < num; i++) {
+                    int j = scanf("v %lf %lf %lf\n", &x, &y, &z);
+                    //printf("%d\n", j);
+                    //printf("%lf %lf %lf\n", x, y, z);
+                    vertices.push_back(Vec3(x,y,-z));
+                }
+                for (int i = 0; i < num; i++) {
+                    scanf("vn %lf %lf %lf\n", &x, &y, &z);
+                }
+                for (int i = 0; i < num; i++) {
+                    scanf("vt %lf %lf\n", &x, &y);
+                }
+                scanf("%d\n", &num);
+                printf("number of faces: %d\n", num);
+                for (int i = 0; i < num; i++) {
+                    scanf("f %d/%d/%d %d/%d/%d %d/%d/%d\n", &id1, &i1, &i2, &id2, &i3, &i4, &id3, &i5, &i6);
+                    triangles.push_back(pair<int, Triangle>(triangles.size(), Triangle(vertices[id1-1] * a + b, vertices[id2-1] * a + b, vertices[id3-1] * a + b)));
+                }
+                }
                 fclose(stdin);
                 kdtree.buildKdTree(triangles, 0, false, 0, true);
         }
@@ -399,7 +425,28 @@ class TriangleMesh : public Object {
             }
             return res;
             */
-            return kdtree.intersect(rayorig, raydir, len, normalvector);
+            bool res =  kdtree.intersect(rayorig, raydir, len, normalvector);
+            if (objtype == 2) {
+                normalvector = normalvector * ((normalvector.dot(Vec3(0,1,0)) > 0) ? 1 : -1);
+            }
+            /*
+            if ((rayorig - Vec3(0,0,-10)).norm() < eps && objtype == 2) {
+                // light from back of the image and the object is water
+                //fprintf(stderr, "\rtest");
+                double len_temp;
+                len_temp = (0.0 - rayorig.z) / raydir.z;
+                Vec3 inter_temp = rayorig + raydir * len_temp;
+                double len_temp2;
+                Vec3 normalvec_temp2;
+                if (!intersect(inter_temp, Vec3(0,-1,0), len_temp2, normalvec_temp2)) {
+                    // the intersection point is under the water.
+                    len = len_temp;
+                    normalvector = Vec3(0,0,-1);
+                    res = true;
+                }
+            }
+            */
+            return res;
         }
 
 
@@ -420,6 +467,7 @@ class TriangleMesh : public Object {
         double transparency;
         double reflection;
         KDTree kdtree;
+        int objtype;
 };
 
 #endif

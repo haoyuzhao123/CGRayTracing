@@ -7,6 +7,7 @@
 using namespace std;
 
 #include "vec3.h"
+#include "texture.h"
 //#include "kdtree.h"
 
 
@@ -18,6 +19,45 @@ class Object {
         virtual double getTransparency() const {};
         virtual double getReflection() const {};
         virtual Vec3 getSurfaceColor(const Vec3 &point) const {};
+};
+
+class Plane : public Object {
+    public:
+        Plane(const Vec3 &p, const Vec3 &n, const Vec3 &sc, const double &refl = 0, const double &transp = 0, const Texture &tx = Texture(), const Vec3 &ec = 0) : position(p), normal(n), surfaceColor(sc), transparency(transp), reflection(refl) {
+            texture = tx;
+        }
+        bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len, Vec3 &normalvector) const { 
+            Vec3 d = position - rayorig;
+            len = d.dot(normal) / raydir.dot(normal);
+            if (len > 0) {
+                normalvector = normal;
+                return true;
+            } else {
+                return false;
+            }
+        }
+        double getTransparency() const {
+            return this -> transparency;
+        }
+
+        double getReflection() const {
+            return this -> reflection;
+        }
+
+        Vec3 getSurfaceColor(const Vec3 &point) const {
+            Vec3 color;
+            if(texture.color(point, color)) {
+                return color;
+            }
+            return (this -> surfaceColor).copy();
+        }
+    private:
+        Vec3 normal;
+        Vec3 position;
+        Vec3 surfaceColor;
+        double transparency;
+        double reflection;
+        Texture texture;
 };
 
 class Sphere : public Object{
@@ -72,7 +112,7 @@ class Sphere : public Object{
             return this -> reflection;
         }
 
-        Vec3 getSurfaceColor() const {
+        Vec3 getSurfaceColor(const Vec3 &point) const {
             return (this -> surfaceColor).copy();
         }
 
@@ -459,7 +499,7 @@ class TriangleMesh : public Object {
             return this -> reflection;
         }
 
-        Vec3 getSurfaceColor() const {
+        Vec3 getSurfaceColor(const Vec3 &point) const {
             return (this -> surfaceColor).copy();
         }
     private:

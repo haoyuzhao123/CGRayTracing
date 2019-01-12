@@ -14,7 +14,7 @@ using namespace std;
 
 int main() {
     int width, height, bpp;
-    unsigned char * texture = stbi_load("texture/granite_texture.jpg", &width, &height, &bpp, 3);
+    unsigned char * texture = stbi_load("texture/iiis.png", &width, &height, &bpp, 3);
     if (texture != NULL) {
         printf("w: %d, h: %d, bpp: %d\n", width, height, bpp);
         stbi_write_png("testtexture.png", width, height, 3, texture, width * 3);

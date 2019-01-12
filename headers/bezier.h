@@ -270,6 +270,15 @@ class Bezier : public Object {
                 }
             }
             normalvector = normalvector * ((normalvector.dot(raydir) < 0) ? 1 : -1);
+            double newt = (ymax - rayorig.y);
+            if(newt > 0.1) {
+                newt = newt / raydir.y;
+                Vec3 newpoint = rayorig + raydir * newt;
+                if ((newpoint.x - position.x) * (newpoint.x - position.x) + (newpoint.z - position.z) * (newpoint.z - position.z) <= cpoints[cpoints.size()-1].z *cpoints[cpoints.size()-1].z) {
+                    len = newt;
+                    normalvector = Vec3(0,1,0);
+                }
+            }
             /*
             if(flag) {
                 printf("lenth: %lf\n", len);

@@ -19,6 +19,7 @@ using namespace std;
 #include "headers/hitpoints.h"
 #include "headers/hash.h"
 #include "headers/bezier.h"
+#include "headers/texture.h"
 
 const double eps = 1e-4;
 const double INF = 1e10;
@@ -80,7 +81,7 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 
 	if (obj->getReflection() < eps && obj->getTransparency() < eps) {
 		// diffusion
-		double r = 400.0 / height;
+		double r = 200.0 / height;
 		if (flag) {
 			// the ray from the eye
 			Hitpoint hp = Hitpoint();
@@ -223,7 +224,7 @@ void render(const vector<Object *> &objs) {
 				//Vec3 disturbance = Vec3(0,0,0);
 				//Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
 				Vec3 dir = uniform_sampling_sphere();
-				trace(lightorg + disturbance, dir, objs, Vec3(1500,1500,1500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+				trace(lightorg + disturbance, dir, objs, Vec3(1000,1000,1000)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
 			//}
 		}
 	}
@@ -256,44 +257,101 @@ int main(int argc, char *argv[]) {
 
 	vector<Object *> objs;
 	vector<Sphere> sphs;
+	vector<Plane> plns;
+	/*
 	sphs.push_back(Sphere(Vec3(0.0, -10020, 0), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(10020, 0.0, 0), 10000, Vec3(0.25, 0.75, 0.25), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(-10020, 0.0, 0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10040), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
 	sphs.push_back(Sphere(Vec3(0.0, 10020, 0), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
+	*/
 	//sphs.push_back(Sphere(Vec3(0.0, 0.0, -10015), 10000, Vec3(0, 0, 0), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	//TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(0, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
+	TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(0, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
 	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
-	//TriangleMesh tm2("model/Mesh001.obj", 20, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
+	TriangleMesh tm2("model/Mesh001.obj", 20, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 	//TriangleMesh tm2("model/water.txt", 7, Vec3(-20, -10, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 
+	int w, h, bpp;
+    unsigned char * texture = stbi_load("texture/granite_texture.jpg", &w, &h, &bpp, 3);
+	vector<vector<Vec3> > tdata;
+	int ctr = 0;
+	for(int i = 0; i < h; i++) {
+		vector<Vec3> v;
+		for(int j = 0; j < w; j++) {
+			Vec3 col = Vec3();
+			col.x = (double)texture[ctr] / (double)256;
+			ctr++;
+			col.y = (double)texture[ctr] / (double)256;
+			ctr++;
+			col.z = (double)texture[ctr] / (double)256;
+			ctr++;
+			v.push_back(col);
+		}
+		tdata.push_back(v);
+	}
+
+	stbi_image_free(texture);
+
+	Texture tex = Texture(tdata, Vec3(0,1,0), Vec3(-30, -20, 0), 60, 70);
+
+	texture = stbi_load("texture/iiis.png", &w, &h, &bpp, 3);
+	vector<vector<Vec3> > tdata2;
+	ctr = 0;
+	for(int i = 0; i < h; i++) {
+		vector<Vec3> v;
+		for(int j = 0; j < w; j++) {
+			Vec3 col = Vec3();
+			col.x = (double)texture[ctr] / (double)256;
+			ctr++;
+			col.y = (double)texture[ctr] / (double)256;
+			ctr++;
+			col.z = (double)texture[ctr] / (double)256;
+			ctr++;
+			v.push_back(col);
+		}
+		tdata2.push_back(v);
+	}
+
+	Texture tex2 = Texture(tdata2, Vec3(0,0,-1), Vec3(-10, -10, 40), 20, 10);
+
+	stbi_image_free(texture);
+
 	//vector<Triangle> tris;
-	
+	plns.push_back(Plane(Vec3(0.0, -20, 0), Vec3(0,1,0), Vec3(0.25, 0.25, 0.25), 0.0, 0.0, tex));
+	plns.push_back(Plane(Vec3(20, 0.0, 0), Vec3(-1,0,0), Vec3(0.25, 0.50, 0.25), 0.0, 0.0));
+	plns.push_back(Plane(Vec3(-20, 0.0, 0), Vec3(1,0,0), Vec3(0.55, 0.25, 0.25), 0.0, 0.0));
+	plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.25, 0.25, 0.25), 0.0, 0.0, tex2));
+	plns.push_back(Plane(Vec3(0.0, 20, 0), Vec3(0,-1,0), Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
 
 	Object * obj;
 	for (int i = 0; i < sphs.size(); i++) {
 		obj = &sphs[i];
 		objs.push_back(obj);
 	}
-	/*
+	for (int i = 0; i < plns.size(); i++) {
+		obj = &plns[i];
+		objs.push_back(obj);
+	}
+	
 	obj = &tm1;
 	objs.push_back(obj);
 	obj = &tm2;
 	objs.push_back(obj);
-	*/
 	
+	/*
 	vector<Vec3> cp;
 	cp.push_back(Vec3(0,-10,4));
 	cp.push_back(Vec3(0,-2,12));
 	cp.push_back(Vec3(0,-6,0));
 	cp.push_back(Vec3(0,10,4));
-	Bezier b = Bezier(cp, Vec3(0,-10,30), Vec3(0.25, 0.25, 0.75), 0.0, 0.0);
+	Bezier b = Bezier(cp, Vec3(0,-10.1,30), Vec3(0.25, 0.25, 0.75), 0.0, 0.0);
 	obj = &b;
 	objs.push_back(obj);
+	*/
 	/*
 	b.gradP(0.5).print();
 	Vec3 org = Vec3(0,0,0);

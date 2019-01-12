@@ -2,6 +2,11 @@
 #define _VEC3_H_
 
 #include <cmath>
+#include <cstdio>
+
+using namespace std;
+
+const double doubleeps = 1e-4;
 
 class Vec3 {
     public:
@@ -80,11 +85,37 @@ class Vec3 {
         double det(const Vec3 &a, const Vec3 &b, const Vec3 &c) {
             return (a.x * b.y * c.z + b.x * c.y * a.z + c.x * a.y * b.z - a.x * c.y * b.z - b.x * a.y * c.z - c.x * b.y * a.z);
         }
+
+        void print() {
+            printf("x: %.6lf, y: %.6lf, z: %.6lf\n", x, y, z);
+        }
 };
 
 // computing the determinent
 double det(const Vec3 &a, const Vec3 &b, const Vec3 &c) {
     return (a.x * b.y * c.z + b.x * c.y * a.z + c.x * a.y * b.z - a.x * c.y * b.z - b.x * a.y * c.z - c.x * b.y * a.z);
+}
+
+Vec3 matrixVectorProduct(const Vec3 &a, const Vec3 &b, const Vec3 &c, const Vec3 &d) {
+    return a * d.x + b * d.y + c * d.z;
+}
+
+bool inv(const Vec3 &a, const Vec3 &b, const Vec3 &c, Vec3 &resa, Vec3 &resb, Vec3 &resc) {
+    double d = det(a, b, c);
+    if (d < doubleeps && d > -doubleeps) {
+        // determinant is 0, no inverse
+        return false;
+    }
+    resa.x = (b.y * c.z - b.z * c.y) / d;
+    resa.y = (c.y * a.z - c.z * a.y) / d;
+    resa.z = (a.y * b.z - a.z * b.y) / d;
+    resb.x = (c.x * b.z - c.z * b.x) / d;
+    resb.y = (a.x * c.z - a.z * c.x) / d;
+    resb.z = (b.x * a.z - b.z * a.x) / d;
+    resc.x = (b.x * c.y - c.x * b.y) / d;
+    resc.y = (c.x * a.y - c.y * a.x) / d;
+    resc.z = (a.x * b.y - a.y * b.x) / d;
+    return true;
 }
 
 #endif

@@ -11,7 +11,6 @@ using namespace std;
 
 
 const double doubleINF = (double)1e10;
-
 class Object {
     public:
         //virtual Vec3 normalvec(const Vec3 &point) const {};
@@ -370,7 +369,7 @@ class TriangleMesh : public Object {
                 } else if (typeofdata == 2) {
                 int num;
                 int id1,id2,id3,i1,i2,i3,i4,i5,i6;
-                double x,y,z;
+                double x,y,z,u,v;
                 scanf("%d\n", &num);
                 printf("number of vertices: %d\n", num);
                 vector<Vec3> vertices;
@@ -380,16 +379,18 @@ class TriangleMesh : public Object {
                     //printf("%lf %lf %lf\n", x, y, z);
                     vertices.push_back(Vec3(x,y,-z));
                 }
+                
                 for (int i = 0; i < num; i++) {
                     scanf("vn %lf %lf %lf\n", &x, &y, &z);
                 }
                 for (int i = 0; i < num; i++) {
                     scanf("vt %lf %lf\n", &x, &y);
                 }
+                
                 scanf("%d\n", &num);
                 printf("number of faces: %d\n", num);
                 for (int i = 0; i < num; i++) {
-                    scanf("f %d/%d/%d %d/%d/%d %d/%d/%d\n", &id1, &i1, &i2, &id2, &i3, &i4, &id3, &i5, &i6);
+                    scanf("f %d/%d/%d %d/%d/%d %d/%d/%d \n", &id1, &i1, &i2, &id2, &i3, &i4, &id3, &i5, &i6);
                     triangles.push_back(pair<int, Triangle>(triangles.size(), Triangle(vertices[id1-1] * a + b, vertices[id2-1] * a + b, vertices[id3-1] * a + b)));
                 }
                 }

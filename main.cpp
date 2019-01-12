@@ -16,6 +16,7 @@ using namespace std;
 #include "headers/sampling.h"
 #include "headers/hitpoints.h"
 #include "headers/hash.h"
+#include "headers/bezier.h"
 
 const double eps = 1e-4;
 const double INF = 1e10;
@@ -28,7 +29,7 @@ char image_data[width * height * 3];
 // image : the image data in the computation
 Vec3 image[height][width];
 
-const int MAX_DEPTH = 10;
+const int MAX_DEPTH = 5;
 const double alpha = 0.7;
 
 const Vec3 background = Vec3(0.0, 0.0, 0.0);
@@ -159,7 +160,6 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 				trace(intersection - normalvec * eps, refr_dir, objs, flux, fa * (1 - Re), flag, depth+1, htable, x, y);
 			}
 		}
-		
 	}
 }
 
@@ -171,10 +171,10 @@ void render(const vector<Object *> &objs) {
 	// the image has z = 0
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
-	int num_of_samples = 10;
+	int num_of_samples = 1;
 	double focus_plane = 30.0;
 	double radius = 1.0;
-	Vec3 lightorg = Vec3(0,29.999,20);
+	Vec3 lightorg = Vec3(0,19.999,30);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
 	double r = 200.0 / height;
@@ -189,7 +189,8 @@ void render(const vector<Object *> &objs) {
 			for (int j = 0; j < num_of_samples; j++) {
 				Vec3 neworg = camorg + uniform_sampling_circle(radius);
 				Vec3 newdir = (point_on_focus - neworg).normalize();
-				trace(neworg, newdir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				//trace(neworg, newdir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 			}
 			trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 		}
@@ -197,8 +198,8 @@ void render(const vector<Object *> &objs) {
 	fprintf(stderr,"\n");
 	// multi-thread for the photon pass
 	// total photon = num_photon * num_threads
-	int num_photon = 2560000;
-	int num_threads = 1;
+	int num_photon = 1280000;
+	int num_threads = 4;
 	omp_set_num_threads(num_threads);
 	#pragma omp parallel 
 	{
@@ -214,13 +215,13 @@ void render(const vector<Object *> &objs) {
 			//double p = 100.0 * (i+1) / num_photon;
 			//fprintf(stderr, "\rPhotonPass %5.2f%%",p);
 			//for(int j = 0; j < 1000; j++) {
-				double a = uniform_sampling_zeroone() * 3;
-				double b = uniform_sampling_zeroone() * 3;
-				//Vec3 disturbance = Vec3(a, 0, b);
-				Vec3 disturbance = Vec3(0,0,0);
+				double a = uniform_sampling_zeroone() * 4 - 2;
+				double b = uniform_sampling_zeroone() * 4 - 2;
+				Vec3 disturbance = Vec3(a, 0, b);
+				//Vec3 disturbance = Vec3(0,0,0);
 				//Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
 				Vec3 dir = uniform_sampling_sphere();
-				trace(lightorg + disturbance, dir, objs, Vec3(2500,2500,2500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+				trace(lightorg + disturbance, dir, objs, Vec3(1500,1500,1500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
 			//}
 		}
 	}
@@ -253,21 +254,20 @@ int main(int argc, char *argv[]) {
 
 	vector<Object *> objs;
 	vector<Sphere> sphs;
-	sphs.push_back(Sphere(Vec3(0.0, -10030, 0), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(10030, 0.0, 0), 10000, Vec3(0.5, 0.75, 0.5), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(-10030, 0.0, 0), 10000, Vec3(0.75, 0.5, 0.5), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10050), 10000, Vec3(0.75, 0.75, 0.75), 0.0, 0.0));
-	sphs.push_back(Sphere(Vec3(0.0, 10030, 0), 10000, Vec3(0.5, 0.5, 0.5), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, -10020, 0), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(10020, 0.0, 0), 10000, Vec3(0.25, 0.75, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(-10020, 0.0, 0), 10000, Vec3(0.75, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 0.0, 10040), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
+	sphs.push_back(Sphere(Vec3(0.0, 10020, 0), 10000, Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(0.0, 0.0, -10015), 10000, Vec3(0, 0, 0), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(-15.0, -20.0, 60), 10, Vec3(0.3, 0.3, 0.3), 0.0, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	TriangleMesh tm1("model/dragon.txt", 2.5, Vec3(10, -25, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
-	//TriangleMesh tm("model/tri.txt", 1, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
+	//TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(0, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
 	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
-	//TriangleMesh tm2("model/Mesh001.obj", 30, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
-	TriangleMesh tm2("model/dragon.txt", 2.5, Vec3(-10, -25, 50), Vec3(0.25, 0.5, 0.25), 0.0, 0.0, 1);
+	//TriangleMesh tm2("model/Mesh001.obj", 20, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
+	//TriangleMesh tm2("model/water.txt", 7, Vec3(-20, -10, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 
 	//vector<Triangle> tris;
 	
@@ -277,16 +277,43 @@ int main(int argc, char *argv[]) {
 		obj = &sphs[i];
 		objs.push_back(obj);
 	}
+	/*
 	obj = &tm1;
 	objs.push_back(obj);
 	obj = &tm2;
 	objs.push_back(obj);
-	/*
-	for (int i = 0; i < tris.size(); i++) {
-		obj = &tris[i];
-		objs.push_back(obj);
-	}
 	*/
+	
+	vector<Vec3> cp;
+	cp.push_back(Vec3(0,-10,4));
+	cp.push_back(Vec3(0,-2,12));
+	cp.push_back(Vec3(0,-6,0));
+	cp.push_back(Vec3(0,10,4));
+	Bezier b = Bezier(cp, Vec3(0,-10,30), Vec3(0.25, 0.25, 0.75), 0.0, 0.0);
+	obj = &b;
+	objs.push_back(obj);
+	/*
+	b.gradP(0.5).print();
+	Vec3 org = Vec3(0,0,0);
+	Vec3 dir = Vec3(0.1,0.1,1);
+	Vec3 initial;
+	initial.x = 22;
+	initial.y = 0.6;
+	initial.z = 2;
+	initial.print();
+	b.newtonMethod(initial, org, dir);
+	*/
+	/*
+	b.funcValue(Vec3(0,0.5,0), Vec3(0,0,0), Vec3(0,0,0)).print();
+	Vec3 resa, resb, resc;
+	b.gradValue(Vec3(0.5,0.5,0.5), Vec3(0,0,0), Vec3(0,0,0), resa, resb, resc);
+	resa.print();
+	resb.print();
+	resc.print();
+	*/
+
+
+
 
 	// render
 	render(objs);

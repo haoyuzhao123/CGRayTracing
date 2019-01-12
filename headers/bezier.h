@@ -287,7 +287,7 @@ class Bezier : public Object {
             return this -> reflection;
         }
 
-        Vec3 getSurfaceColor() const {
+        Vec3 getSurfaceColor(const Vec3 &point) const {
             return (this -> surfaceColor).copy();
         }
     private:

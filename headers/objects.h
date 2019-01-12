@@ -17,7 +17,7 @@ class Object {
         virtual bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len, Vec3 & normalvector) const {};
         virtual double getTransparency() const {};
         virtual double getReflection() const {};
-        virtual Vec3 getSurfaceColor() const {};
+        virtual Vec3 getSurfaceColor(const Vec3 &point) const {};
 };
 
 class Sphere : public Object{

@@ -7,6 +7,8 @@
 
 using namespace std;
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -71,7 +73,7 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 		normalvec = -normalvec;
 		into = false;
 	}
-	Vec3 f = obj->getSurfaceColor();
+	Vec3 f = obj->getSurfaceColor(intersection);
 
 	double p = max(f.x, f.y, f.z);
 
@@ -328,5 +330,5 @@ int main(int argc, char *argv[]) {
 		}
 	}
     stbi_write_png("test.png", width, height, 3, image_data, width * 3);
-    return 0;
+    return 0; 
 }

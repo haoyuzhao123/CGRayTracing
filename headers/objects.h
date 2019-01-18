@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <cstdio>
 
 using namespace std;
 
@@ -12,6 +13,7 @@ using namespace std;
 
 
 const double doubleINF = (double)1e10;
+const double neweps = 1e-3;
 class Object {
     public:
         //virtual Vec3 normalvec(const Vec3 &point) const {};
@@ -471,9 +473,9 @@ class TriangleMesh : public Object {
                 normalvector = normalvector * ((normalvector.dot(Vec3(0,1,0)) > 0) ? 1 : -1);
             }
             /*
-            if ((rayorig - Vec3(0,0,-10)).norm() < eps && objtype == 2) {
+            if ((rayorig - Vec3(0,0,-10)).norm() < neweps && objtype == 2) {
                 // light from back of the image and the object is water
-                //fprintf(stderr, "\rtest");
+                //printf("test\n");
                 double len_temp;
                 len_temp = (0.0 - rayorig.z) / raydir.z;
                 Vec3 inter_temp = rayorig + raydir * len_temp;

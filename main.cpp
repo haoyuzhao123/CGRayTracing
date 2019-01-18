@@ -158,9 +158,9 @@ void trace(const Vec3 &org, const Vec3 &dir, const vector<Object *> &objs, Vec3 
 		} else {
 			// photon ray (pick one via Russian roulette)
 			if (uniform_sampling_zeroone() < 0.5) {
-				trace(intersection + normalvec * eps, refl_dir, objs, flux, fa * Re, flag, depth+1, htable, x, y);
+				trace(intersection + normalvec * eps, refl_dir, objs, flux, fa * Re * 0.3, flag, depth+1, htable, x, y);
 			} else {
-				trace(intersection - normalvec * eps, refr_dir, objs, flux, fa * (1 - Re), flag, depth+1, htable, x, y);
+				trace(intersection - normalvec * eps, refr_dir, objs, flux, fa * (1 - Re * 0.3), flag, depth+1, htable, x, y);
 			}
 		}
 	}
@@ -177,7 +177,7 @@ void render(const vector<Object *> &objs) {
 	int num_of_samples = 1;
 	double focus_plane = 30.0;
 	double radius = 1.0;
-	Vec3 lightorg = Vec3(0,19.999,30);
+	Vec3 lightorg = Vec3(0,19.999,20);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
 	double r = 200.0 / height;
@@ -201,8 +201,8 @@ void render(const vector<Object *> &objs) {
 	fprintf(stderr,"\n");
 	// multi-thread for the photon pass
 	// total photon = num_photon * num_threads
-	int num_photon = 1280000;
-	int num_threads = 4;
+	int num_photon = 2560000;
+	int num_threads = 8;
 	omp_set_num_threads(num_threads);
 	#pragma omp parallel 
 	{
@@ -224,7 +224,7 @@ void render(const vector<Object *> &objs) {
 				//Vec3 disturbance = Vec3(0,0,0);
 				//Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
 				Vec3 dir = uniform_sampling_sphere();
-				trace(lightorg + disturbance, dir, objs, Vec3(1000,1000,1000)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+				trace(lightorg + disturbance, dir, objs, Vec3(500,500,500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
 			//}
 		}
 	}
@@ -320,13 +320,16 @@ int main(int argc, char *argv[]) {
 
 	stbi_image_free(texture);
 
-	//vector<Triangle> tris;
-	plns.push_back(Plane(Vec3(0.0, -20, 0), Vec3(0,1,0), Vec3(0.25, 0.25, 0.25), 0.0, 0.0, tex));
-	plns.push_back(Plane(Vec3(20, 0.0, 0), Vec3(-1,0,0), Vec3(0.25, 0.50, 0.25), 0.0, 0.0));
-	plns.push_back(Plane(Vec3(-20, 0.0, 0), Vec3(1,0,0), Vec3(0.55, 0.25, 0.25), 0.0, 0.0));
-	plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.25, 0.25, 0.25), 0.0, 0.0, tex2));
-	plns.push_back(Plane(Vec3(0.0, 20, 0), Vec3(0,-1,0), Vec3(0.25, 0.25, 0.25), 0.0, 0.0));
+	printf("testtesttest\n");
 
+	//vector<Triangle> tris;
+	plns.push_back(Plane(Vec3(0.0, -20, 0), Vec3(0,1,0), Vec3(0.15, 0.15, 0.15), 0.0, 0.0, tex));
+	plns.push_back(Plane(Vec3(20, 0.0, 0), Vec3(-1,0,0), Vec3(0.15, 0.50, 0.15), 0.0, 0.0));
+	plns.push_back(Plane(Vec3(-20, 0.0, 0), Vec3(1,0,0), Vec3(0.50, 0.15, 0.15), 0.0, 0.0));
+	plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
+	plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
+	plns.push_back(Plane(Vec3(0.0, 20, 0), Vec3(0,-1,0), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
+	
 	Object * obj;
 	for (int i = 0; i < sphs.size(); i++) {
 		obj = &sphs[i];
@@ -345,10 +348,10 @@ int main(int argc, char *argv[]) {
 	/*
 	vector<Vec3> cp;
 	cp.push_back(Vec3(0,-10,4));
-	cp.push_back(Vec3(0,-2,12));
-	cp.push_back(Vec3(0,-6,0));
-	cp.push_back(Vec3(0,10,4));
-	Bezier b = Bezier(cp, Vec3(0,-10.1,30), Vec3(0.25, 0.25, 0.75), 0.0, 0.0);
+	cp.push_back(Vec3(0,2,4));
+	cp.push_back(Vec3(0,-2,0));
+	cp.push_back(Vec3(0,10,2));
+	Bezier b = Bezier(cp, Vec3(0,-10.1,30), Vec3(1.0, 1.0, 1.0), 0.5, 0.0);
 	obj = &b;
 	objs.push_back(obj);
 	*/

@@ -23,45 +23,6 @@ class Object {
         virtual Vec3 getSurfaceColor(const Vec3 &point) const {};
 };
 
-class Plane : public Object {
-    public:
-        Plane(const Vec3 &p, const Vec3 &n, const Vec3 &sc, const double &refl = 0, const double &transp = 0, const Texture &tx = Texture(), const Vec3 &ec = 0) : position(p), normal(n), surfaceColor(sc), transparency(transp), reflection(refl) {
-            texture = tx;
-        }
-        bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len, Vec3 &normalvector) const { 
-            Vec3 d = position - rayorig;
-            len = d.dot(normal) / raydir.dot(normal);
-            if (len > 0) {
-                normalvector = normal;
-                return true;
-            } else {
-                return false;
-            }
-        }
-        double getTransparency() const {
-            return this -> transparency;
-        }
-
-        double getReflection() const {
-            return this -> reflection;
-        }
-
-        Vec3 getSurfaceColor(const Vec3 &point) const {
-            Vec3 color;
-            if(texture.color(point, color)) {
-                return color;
-            }
-            return (this -> surfaceColor).copy();
-        }
-    private:
-        Vec3 normal;
-        Vec3 position;
-        Vec3 surfaceColor;
-        double transparency;
-        double reflection;
-        Texture texture;
-};
-
 class Sphere : public Object{
     public:
         Sphere( 
@@ -373,6 +334,7 @@ class KDTree {
 
 class TriangleMesh : public Object {
     public:
+        TriangleMesh() {}
         TriangleMesh(char * filename, double a, const Vec3 &b, const Vec3 &sc, 
             const double &refl = 0, const double &transp = 0, int typeofdata = 0, const Vec3 &ec = 0) :
             surfaceColor(sc), transparency(transp), reflection(refl) {
@@ -511,6 +473,78 @@ class TriangleMesh : public Object {
         double reflection;
         KDTree kdtree;
         int objtype;
+};
+
+class Plane : public Object {
+    public:
+        Plane(const Vec3 &p, const Vec3 &n, const Vec3 &sc, const double &refl = 0, const double &transp = 0, const Texture &tx = Texture(), const Vec3 &ec = 0) : position(p), normal(n), surfaceColor(sc), transparency(transp), reflection(refl) {
+            texture = tx;
+            if(fabs(n.y - 1.0) < 1e-5 && texture.isbump && texture.htexture) {
+                vector<pair<int, Triangle> > tris;
+                printf("construct bump mapping\n");
+                int step = 3;
+                for(int i = 0; i < texture.height.size()/step-1; i++) {
+                    for(int j = 0; j < texture.height[0].size()/step-1; j++) {
+                        double x1 = texture.position.x + texture.lenx * j * step / texture.height[0].size();
+                        double x2 = texture.position.x + texture.lenx * (j + 1) * step / texture.height[0].size();
+                        double y1 = texture.position.z + texture.leny * i * step / texture.height.size();
+                        double y2 = texture.position.z + texture.leny * (i+1) * step / texture.height.size();
+                        Vec3 a = Vec3(x1, texture.height[i*step][j*step] + position.y, y1);
+                        Vec3 b = Vec3(x2, texture.height[i*step][(j+1)*step] + position.y, y1);
+                        Vec3 c = Vec3(x1, texture.height[(i+1)*step][j*step] + position.y, y2);
+                        Vec3 d = Vec3(x2, texture.height[(i+1)*step][(j+1)*step] + position.y, y2);
+                        tris.push_back(pair<int, Triangle>(tris.size(), Triangle(a,b,c)));
+                        tris.push_back(pair<int, Triangle>(tris.size(), Triangle(d,b,c)));
+                        //printf("%lf %lf %lf\n", a.y, b.y, c.y, d.y);
+                    }
+                }
+                bumpmapping.buildKdTree(tris, 0, false, 0, true);
+                printf("complete construct bump mapping\n");
+            }
+        }
+        bool intersect(const Vec3 &rayorig, const Vec3 &raydir, double &len, Vec3 &normalvector) const { 
+            Vec3 d = position - rayorig;
+            len = d.dot(normal) / raydir.dot(normal);
+            if (len > 0) {
+                normalvector = normal;
+                double lenp;
+                Vec3 normalp;
+                //printf("test1\n");
+                if(texture.isbump && fabs(normal.y - 1) < 1e-5 &&bumpmapping.intersect(rayorig, raydir, lenp, normalp)) {
+                    if(lenp < len && lenp > 0) {
+                        len = lenp;
+                        normalvector = normalp;
+                    }
+                }
+                //printf("test2\n");
+                return true;
+            } else {
+                return false;
+            }
+        }
+        double getTransparency() const {
+            return this -> transparency;
+        }
+
+        double getReflection() const {
+            return this -> reflection;
+        }
+
+        Vec3 getSurfaceColor(const Vec3 &point) const {
+            Vec3 color;
+            if(texture.color(point, color)) {
+                return color;
+            }
+            return (this -> surfaceColor).copy();
+        }
+    private:
+        Vec3 normal;
+        Vec3 position;
+        Vec3 surfaceColor;
+        double transparency;
+        double reflection;
+        Texture texture;
+        KDTree bumpmapping;
 };
 
 #endif

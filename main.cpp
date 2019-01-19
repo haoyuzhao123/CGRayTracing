@@ -175,8 +175,8 @@ void render(const vector<Object *> &objs) {
 	// the x axis of the image range from (-10,10)
 	// in this project, we assume that there is only 1 point light source
 	int num_of_samples = 1;
-	double focus_plane = 30.0;
-	double radius = 1.0;
+	double focus_plane = 20.0;
+	double radius = 0.5;
 	Vec3 lightorg = Vec3(0,19.999,20);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
@@ -195,7 +195,7 @@ void render(const vector<Object *> &objs) {
 				//trace(neworg, newdir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 				trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 			}
-			trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+			//trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 		}
 	}
 	fprintf(stderr,"\n");
@@ -270,13 +270,15 @@ int main(int argc, char *argv[]) {
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(0, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
+	TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(-5, -20, 25), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
 	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
 	TriangleMesh tm2("model/Mesh001.obj", 20, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 	//TriangleMesh tm2("model/water.txt", 7, Vec3(-20, -10, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 
+	//TriangleMesh tm2("model/dragon.txt", 1.5, Vec3(-10, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
+
 	int w, h, bpp;
-    unsigned char * texture = stbi_load("texture/granite_texture.jpg", &w, &h, &bpp, 3);
+    unsigned char * texture = stbi_load("texture/ChessBoard.png", &w, &h, &bpp, 3);
 	vector<vector<Vec3> > tdata;
 	int ctr = 0;
 	for(int i = 0; i < h; i++) {
@@ -296,8 +298,8 @@ int main(int argc, char *argv[]) {
 
 	stbi_image_free(texture);
 
-	Texture tex = Texture(tdata, Vec3(0,1,0), Vec3(-30, -20, 0), 60, 70);
-
+	Texture tex = Texture(tdata, Vec3(0,1,0), Vec3(-21, 0, 0), 42, 40, false);
+	/*
 	texture = stbi_load("texture/iiis.png", &w, &h, &bpp, 3);
 	vector<vector<Vec3> > tdata2;
 	ctr = 0;
@@ -319,6 +321,7 @@ int main(int argc, char *argv[]) {
 	Texture tex2 = Texture(tdata2, Vec3(0,0,-1), Vec3(-10, -10, 40), 20, 10);
 
 	stbi_image_free(texture);
+	 */
 
 	printf("testtesttest\n");
 
@@ -327,7 +330,7 @@ int main(int argc, char *argv[]) {
 	plns.push_back(Plane(Vec3(20, 0.0, 0), Vec3(-1,0,0), Vec3(0.15, 0.50, 0.15), 0.0, 0.0));
 	plns.push_back(Plane(Vec3(-20, 0.0, 0), Vec3(1,0,0), Vec3(0.50, 0.15, 0.15), 0.0, 0.0));
 	plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
-	plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
+	//plns.push_back(Plane(Vec3(0.0, 0.0, 40), Vec3(0,0,-1), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
 	plns.push_back(Plane(Vec3(0.0, 20, 0), Vec3(0,-1,0), Vec3(0.15, 0.15, 0.15), 0.0, 0.0));
 	
 	Object * obj;
@@ -345,16 +348,16 @@ int main(int argc, char *argv[]) {
 	obj = &tm2;
 	objs.push_back(obj);
 	
-	/*
+	
 	vector<Vec3> cp;
 	cp.push_back(Vec3(0,-10,4));
 	cp.push_back(Vec3(0,2,4));
 	cp.push_back(Vec3(0,-2,0));
 	cp.push_back(Vec3(0,10,2));
-	Bezier b = Bezier(cp, Vec3(0,-10.1,30), Vec3(1.0, 1.0, 1.0), 0.5, 0.0);
+	Bezier b = Bezier(cp, Vec3(15,-10.1,35), Vec3(1.0, 1.0, 1.0), 0.5, 0.0);
 	obj = &b;
 	objs.push_back(obj);
-	*/
+	
 	/*
 	b.gradP(0.5).print();
 	Vec3 org = Vec3(0,0,0);

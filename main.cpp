@@ -176,7 +176,7 @@ void render(const vector<Object *> &objs) {
 	// in this project, we assume that there is only 1 point light source
 	int num_of_samples = 1;
 	double focus_plane = 20.0;
-	double radius = 0.5;
+	double radius = 1.5;
 	Vec3 lightorg = Vec3(0,19.999,20);
 	Vec3 camorg = Vec3(0,0,-10);
 	//vector<Hitpoint> hitpoints;
@@ -187,13 +187,32 @@ void render(const vector<Object *> &objs) {
 		for (int w = 0; w < width; w++) {
 			double x = (2.0 * ((double)w/width)-1) * 10.0;
 			double y = (2.0 * ((double)h/height)-1) * 10.0 * height / width;
+			double x1 = (2.0 * ((double)(w+0.5)/width)-1) * 10.0;
+			double y1 = (2.0 * ((double)h/height)-1) * 10.0 * height / width;
+			double x2 = (2.0 * ((double)(w-0.5)/width)-1) * 10.0;
+			double y2 = (2.0 * ((double)h/height)-1) * 10.0 * height / width;
+			double x3 = (2.0 * ((double)w/width)-1) * 10.0;
+			double y3 = (2.0 * ((double)(h+0.5)/height)-1) * 10.0 * height / width;
+			double x4 = (2.0 * ((double)w/width)-1) * 10.0;
+			double y4 = (2.0 * ((double)(h-0.5)/height)-1) * 10.0 * height / width;
 			Vec3 dir = (Vec3(x,y,0) - camorg).normalize();
+			Vec3 dir1 = (Vec3(x1,y1,0) - camorg).normalize();
+			Vec3 dir2 = (Vec3(x2,y2,0) - camorg).normalize();
+			Vec3 dir3 = (Vec3(x3,y3,0) - camorg).normalize();
+			Vec3 dir4 = (Vec3(x4,y4,0) - camorg).normalize();
 			Vec3 point_on_focus = dir * ((focus_plane - camorg.z) / dir.z) + camorg;
 			for (int j = 0; j < num_of_samples; j++) {
 				Vec3 neworg = camorg + uniform_sampling_circle(radius);
 				Vec3 newdir = (point_on_focus - neworg).normalize();
 				//trace(neworg, newdir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				
 				trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				/*
+				trace(camorg, dir1, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				trace(camorg, dir2, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				trace(camorg, dir3, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				trace(camorg, dir4, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
+				 */
 			}
 			//trace(camorg, dir, objs, Vec3(), Vec3(1,1,1), true, 0, htable, w, h);
 		}
@@ -224,7 +243,7 @@ void render(const vector<Object *> &objs) {
 				//Vec3 disturbance = Vec3(0,0,0);
 				//Vec3 dir = uniform_sampling_halfsphere(Vec3(0,-1,0));
 				Vec3 dir = uniform_sampling_sphere();
-				trace(lightorg + disturbance, dir, objs, Vec3(500,500,500)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
+				trace(lightorg + disturbance, dir, objs, Vec3(700,700,700)*(PI*4.0), Vec3(1,1,1), false, 	0, htable, 0, 0);
 			//}
 		}
 	}
@@ -247,7 +266,7 @@ void render(const vector<Object *> &objs) {
 }
 
 int main(int argc, char *argv[]) {
-	srand(19);
+	srand(time(0));
 	//initialize the image data
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
@@ -270,15 +289,15 @@ int main(int argc, char *argv[]) {
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 60), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.0));
 	//sphs.push_back(Sphere(Vec3(10.0, -20.0, 30), 7, Vec3(1.0, 1.0, 1.0), 0.8, 0.5));
 
-	TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(-5, -20, 25), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
+	TriangleMesh tm1("model/dragon.txt", 1.5, Vec3(-5, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
 	//TriangleMesh tm("model/lowpolybunny.txt", 10, Vec3(0, -15, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5);
-	TriangleMesh tm2("model/Mesh001.obj", 20, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
+	//TriangleMesh tm2("model/Mesh001.obj", 20, Vec3(0, -15, 30), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 	//TriangleMesh tm2("model/water.txt", 7, Vec3(-20, -10, 40), Vec3(1.0, 1.0, 1.0), 0.8, 0.5, 2);
 
 	//TriangleMesh tm2("model/dragon.txt", 1.5, Vec3(-10, -20, 30), Vec3(0.25, 0.25, 0.5), 0.0, 0.0, 1);
 
 	int w, h, bpp;
-    unsigned char * texture = stbi_load("texture/ChessBoard.png", &w, &h, &bpp, 3);
+    unsigned char * texture = stbi_load("texture/stone.jpg", &w, &h, &bpp, 3);
 	vector<vector<Vec3> > tdata;
 	int ctr = 0;
 	for(int i = 0; i < h; i++) {
@@ -298,7 +317,7 @@ int main(int argc, char *argv[]) {
 
 	stbi_image_free(texture);
 
-	Texture tex = Texture(tdata, Vec3(0,1,0), Vec3(-21, 0, 0), 42, 40, false);
+	Texture tex = Texture(tdata, Vec3(0,1,0), Vec3(-21, 0, 0), 42, 40, true);
 	/*
 	texture = stbi_load("texture/iiis.png", &w, &h, &bpp, 3);
 	vector<vector<Vec3> > tdata2;
@@ -345,10 +364,10 @@ int main(int argc, char *argv[]) {
 	
 	obj = &tm1;
 	objs.push_back(obj);
-	obj = &tm2;
-	objs.push_back(obj);
+	//obj = &tm2;
+	//objs.push_back(obj);
 	
-	
+	/*
 	vector<Vec3> cp;
 	cp.push_back(Vec3(0,-10,4));
 	cp.push_back(Vec3(0,2,4));
@@ -357,7 +376,7 @@ int main(int argc, char *argv[]) {
 	Bezier b = Bezier(cp, Vec3(15,-10.1,35), Vec3(1.0, 1.0, 1.0), 0.5, 0.0);
 	obj = &b;
 	objs.push_back(obj);
-	
+	*/
 	/*
 	b.gradP(0.5).print();
 	Vec3 org = Vec3(0,0,0);
@@ -377,9 +396,6 @@ int main(int argc, char *argv[]) {
 	resb.print();
 	resc.print();
 	*/
-
-
-
 
 	// render
 	render(objs);
